@@ -9,14 +9,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watchAll",
-    "lint": "eslint src/ --ext .ts",
-    "lint:fix": "eslint src/ --ext .ts --fix",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "clean": "rm -rf dist",
-    "prestart": "npm run build"
   },
   "dependencies": {
     "@babel/parser": "^7.28.5",
