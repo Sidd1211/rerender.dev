@@ -24,7 +24,7 @@ const ANALYSIS_RULES = [
       fix: 'Always provide a dependency array (`[]` or `[deps]`). If you do not need memoization, remove the hook.',
       severity: 'Medium',
       // Detects: useMemo(...) or useCallback(...) without the final array argument
-      regex: /(useMemo|useCallback)\s*\(\s*(\([^\)]*\)\s*=>\s*\{[^}]*\}|[^,]*)\s*\)/g,
+      regex: /(useMemo|useCallback)\s*\(\s*(\([^\)]*\)\s*=>\s*\{[^}]*\})\s*\)(?!\s*,\s*\[)/g,
     },
     {
       id: 'A003',
