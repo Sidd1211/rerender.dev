@@ -2,7 +2,7 @@ import { useState } from "react";
 // Import the new CSS file
 import './App.css'; // Make sure this path is correct for your project structure
 
-const API_URL = "http://localhost:5000/analyze";
+const API_URL = "https://rerender-dev.onrender.com/analyze";
 
 function App() {
   const [code, setCode] = useState("");
