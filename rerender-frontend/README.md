@@ -1,16 +1,71 @@
-# React + Vite
+# ReRender.dev — React Performance Analyzer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Analyze React components for unnecessary re-renders, bad `useEffect` patterns, and memoization-breaking props.
 
-Currently, two official plugins are available:
+ReRender.dev is a lightweight **React performance analysis tool** that scans pasted component code and highlights common patterns that silently cause slow renders in production React applications.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+👉 Live demo: https://rerender-dev.vercel.app/
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🔍 What problem does this solve?
 
-## Expanding the ESLint configuration
+Many React apps feel slow even when there are no obvious bugs.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Common causes include:
+- `useEffect` running on every render
+- Inline functions and objects breaking `React.memo`
+- Components re-rendering more than necessary
+
+These issues are easy to miss during development and code reviews.
+
+**ReRender.dev helps React developers detect these performance pitfalls quickly and understand why they matter.**
+
+---
+
+## ✨ Features
+
+ReRender.dev currently detects:
+
+- Missing dependency array in `useEffect`
+- `useEffect` with empty dependencies but external variable usage
+- Inline arrow functions passed as JSX props
+- Inline object and array literals passed as JSX props
+- Memoization-breaking patterns in common React component structures
+
+Each detected issue includes:
+- Severity level
+- Line reference
+- Explanation of the problem
+- Suggested fix
+
+---
+
+## 🚀 How to use
+
+1. Open https://rerender-dev.vercel.app/
+2. Paste a React component
+3. Click **Find performance issues**
+4. Review detected issues and suggestions
+
+No login. No configuration. No project setup.
+
+---
+
+## 🧪 Example test component
+
+Paste this example to see multiple issues flagged:
+
+```jsx
+function Demo({ value }) {
+  useEffect(() => {
+    console.log(value);
+  });
+
+  return (
+    <Child
+      onClick={() => console.log("click")}
+      config={{ mode: "dark" }}
+    />
+  );
+}
