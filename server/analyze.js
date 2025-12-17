@@ -42,7 +42,7 @@ const ANALYSIS_RULES = [
     id: 'A003',
     type: 'useState-function-reference',
     title: 'useState initialized with function reference',
-    why: 'Passing a function reference to useState stores the function itself as state. This is often unintentional and may lead to confusing bugs.',
+    why: 'Passing a function reference to useState stores the function itself as state. This is often unintentional.',
     fix: 'If you intend to compute an initial value, wrap the call: useState(() => computeValue()).',
     severity: 'Low',
     regex: /useState\(\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\)/g,
@@ -52,13 +52,27 @@ const ANALYSIS_RULES = [
   // ========================================================================
   // B. PERFORMANCE & RENDER OPTIMIZATION RULES
   // ========================================================================
+
+  // 🔴 STRONG RULE — breaks memoization
   {
-    id: 'B001',
+    id: 'B001A',
+    type: 'inline-function-breaks-memoization',
+    title: 'Inline function breaks memoization',
+    why: 'This inline function is passed to a memoized component. A new function is created on every render, defeating React.memo.',
+    fix: 'Extract the handler and memoize it using useCallback before passing it to the memoized component.',
+    severity: 'High',
+    requiresMemoContext: true,
+    regex: /(on[A-Z][^=]*|onClick|onChange)=\s*\{\s*\([^\)]*\)\s*=>\s*[^}]*\}/g,
+  },
+
+  // 🟡 CONTEXT-DEPENDENT RULE
+  {
+    id: 'B001B',
     type: 'jsx-inline-arrow-function',
-    title: 'Inline arrow function in JSX prop',
-    why: 'A new function instance is created on every render, which can break memoization.',
-    fix: 'Define the function outside the component or memoize it with useCallback.',
-    severity: 'Medium',
+    title: 'Inline arrow function in JSX prop (context-dependent)',
+    why: 'Inline arrow functions create a new function on every render. This is usually fine, but can cause unnecessary re-renders when passed to memoized or frequently re-rendered components.',
+    fix: 'If this prop is passed to a memoized or frequently rendered child, consider extracting or memoizing the handler.',
+    severity: 'Info',
     regex: /(on[A-Z][^=]*|onClick|onChange)=\s*\{\s*\([^\)]*\)\s*=>\s*[^}]*\}/g,
   },
 
@@ -120,9 +134,17 @@ function analyze(code) {
 
   const issues = [];
 
+  // 🔑 Detect memoization context once per file
+  const hasMemoizedComponent = /React\.memo\s*\(/.test(code);
+
   ANALYSIS_RULES.forEach(rule => {
     let match;
     rule.regex.lastIndex = 0;
+
+    // Skip memo-required rules if no memoization exists
+    if (rule.requiresMemoContext && !hasMemoizedComponent) {
+      return;
+    }
 
     while ((match = rule.regex.exec(code)) !== null) {
       const matchText = match[0].trim();
@@ -141,6 +163,7 @@ function analyze(code) {
       const lineNumber = (code.slice(0, startIndex).match(/\n/g) || []).length + 1;
 
       issues.push({
+        id: rule.id,
         type: rule.type,
         title: rule.title,
         why: rule.why,
@@ -156,7 +179,7 @@ function analyze(code) {
     }
   });
 
-  const severityRank = { High: 3, Medium: 2, Low: 1 };
+  const severityRank = { High: 3, Medium: 2, Low: 1, Info: 0 };
 
   return {
     timestamp: new Date().toISOString(),
