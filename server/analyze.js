@@ -137,6 +137,9 @@ function analyze(code) {
   // 🔑 Detect memoization context once per file
   const hasMemoizedComponent = /React\.memo\s*\(/.test(code);
 
+  // 🔴 Track memo-breaking inline handlers
+  const memoBreakingPositions = new Set();
+
   ANALYSIS_RULES.forEach(rule => {
     let match;
     rule.regex.lastIndex = 0;
@@ -149,6 +152,7 @@ function analyze(code) {
     while ((match = rule.regex.exec(code)) !== null) {
       const matchText = match[0].trim();
       const initializerName = match[1];
+      const startIndex = match.index;
 
       // Suppress safe built-in initializers for A003
       if (
@@ -159,8 +163,18 @@ function analyze(code) {
         continue;
       }
 
-      const startIndex = match.index;
-      const lineNumber = (code.slice(0, startIndex).match(/\n/g) || []).length + 1;
+      // 🔴 Record memo-breaking inline handlers
+      if (rule.id === 'B001A') {
+        memoBreakingPositions.add(startIndex);
+      }
+
+      // 🟡 Suppress B001B if B001A already fired here
+      if (rule.id === 'B001B' && memoBreakingPositions.has(startIndex)) {
+        continue;
+      }
+
+      const lineNumber =
+        (code.slice(0, startIndex).match(/\n/g) || []).length + 1;
 
       issues.push({
         id: rule.id,
